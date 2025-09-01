@@ -25,6 +25,14 @@ descricao_atendimento varchar(100) not null,
 prescricao varchar (100) null
 );
 
+alter table consultas 
+add CONSTRAINT unico_horario_dentista 
+UNIQUE (dentista_responsavel, data_consulta, hora_consulta);
+
+ALTER TABLE consultas
+ADD CONSTRAINT unico_horario_paciente
+UNIQUE (paciente, data_consulta, hora_consulta);
+
 create table consultas_procedimentos(
 id serial primary key,
 consulta_id int not null,
@@ -84,6 +92,10 @@ especialidade varchar(50) not null,
 horario_atendimento time not null
 );
 
+alter table dentistas
+
+
+
 create table procedimentos_odontologicos(
 id serial primary key,
 nome varchar(100) not null,
@@ -123,6 +135,9 @@ values ('Vania','14567934100','05-07-1989', '(24)889670561','vania.p@.com','Corr
 
 insert into pacientes (nome_completo, cpf, data_nascimento, telefone, email, endereco, historico_consultas)
 values ('Isabela','09824233178','09-07-2000', '(24)87511060','isa.p@.com','Centro', 'Radiologia')
+
+insert into pacientes (nome_completo, cpf, data_nascimento, telefone, email, endereco, historico_consultas)
+values ('Marlan','09824233559','09-07-1967', '(24)87519833','mar.p@.com','Centro', 'Harmonização Orofacial')
 
 
 
@@ -170,7 +185,17 @@ values ('Aparelho Ortodôntico', 'Correção do alinhamento dos dentes e da mand
 '60 - 120 minutos');
  
 select * from procedimentos_odontologicos 
-select * from consultas_procedimentos 
+
+--consultas dos procedimentos nos clientes
+
+select 
+consultas_procedimentos.procedimento_id,
+procedimentos_odontologicos.nome as procedimento_nome,
+pacientes.nome_completo as paciente
+from consultas_procedimentos
+join procedimentos_odontologicos on  consultas_procedimentos.procedimento_id = procedimentos_odontologicos.id
+join pacientes on consultas_procedimentos.procedimento_id = pacientes.id;
+
 select * from consultas 
 
 ALTER TABLE public.consultas ALTER COLUMN paciente TYPE varchar USING paciente::varchar;
@@ -209,13 +234,29 @@ values('Ana Clara Lima Reis', '12765438921', 'BA12795', 'Clinico Geral');
 
 select * from dentistas 
 
+--consulta por dia, hora, nome do paciente e do dentista
+
 select 
-horarios_atendimento.id as nome
+horarios_atendimento.hora_inicio as hora_consulta ,
+dentistas.nome_completo as dentista,
+pacientes.nome_completo as paciente,
+consultas.data_consulta as dia_atendimento
 from horarios_atendimento 
+join dentistas  on horarios_atendimento.id = dentistas.id
+join pacientes on horarios_atendimento.id = pacientes.id
+join consultas on horarios_atendimento.id = consultas.id
+where data_consulta = '2025-09-04'
+order by hora_consulta asc;  
+
 --insert na tabela consultas
 
 insert into consultas (paciente, dentista_responsavel ,data_consulta, hora_consulta, Descricao_atendimento, prescricao, status)
-values (1 ,1,'01/09/2025', '15:15','Limpeza dentária - ','cloroxedina 100mg para antissepsia. Creme fluoretado 1500ppm sensibilizante,  ', 'agendado')
+values (12 ,1,'01/09/2025', '15:15','Limpeza dentária - ','cloroxedina 100mg para antissepsia. Creme fluoretado 1500ppm sensibilizante,  ', 'agendado')
+
+update consultas 
+set status ='agendado' where  paciente = 1;
+
+delete from pacientes where id = 3;
 
 insert into consultas (paciente, dentista_responsavel, data_consulta, hora_consulta, descricao_atendimento, prescricao, status)
 values (11,6,'10/09/2025', '09:00','Canal','Alérgico à penicilina - Clindamicina 300 mg, 1 cápsula de 6/6h por 7 dias. ', 'agendado')
@@ -243,6 +284,7 @@ values (4, 6,'12/09/2025', '14:30','Estomatologia','Amoxicilina um dia antes, co
 
 insert into consultas (paciente, dentista_responsavel ,data_consulta, hora_consulta, Descricao_atendimento, prescricao, status)
 values (3, 10,'09/09/2025', '10:30','Radiologia','Raio x intrabucal', 'disponivel')
+
 
 select * from consultas 
 
@@ -333,7 +375,8 @@ select
     consultas.status
 from consultas 
 join pacientes  on consultas.paciente = pacientes.id
-join dentistas  on consultas.dentista_responsavel = dentistas.id;
+join dentistas  on consultas.dentista_responsavel = dentistas.id
+order by data_consulta asc;
 
 
 select * from 
